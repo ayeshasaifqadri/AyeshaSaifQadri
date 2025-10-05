@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>عائشة سيف Bubble Burst Timer</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700&family=Poppins:wght@400;600;700&family=Amiri:wght@700&display=swap" rel="stylesheet">
+
+<style>
+/* Global Reset and Body Styling */
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  font-family:'Poppins',sans-serif;
+  text-align:center;
+  color:#fff;
+  overflow:hidden;
+  /* Deep, dark background for the star effect */
+  background: #060910; 
+  position: relative; 
+}
+
+/* Star Particle Container (Kept from original) */
+.starfield {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: -1; 
+}
+
+/* Star Animation (Kept from original) */
+@keyframes twinkle {
+  0% { transform: scale(0.5) translateY(0); opacity: 0.1; }
+  50% { transform: scale(1.1) translateY(-5px); opacity: 0.8; }
+  100% { transform: scale(0.5) translateY(0); opacity: 0.1; }
+}
+
+/* Style for individual stars (Kept from original) */
+.star {
+  position: absolute;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 5px 1px rgba(0,255,255,0.7);
+  opacity: 0;
+  animation-name: twinkle;
+  animation-iteration-count: infinite;
+}
+
+/* SCOREBOARD STYLING */
+#scoreboard {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    padding: 10px 20px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #00ffe0;
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px solid #00aaff;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+    z-index: 20;
+}
+#score-value {
+    color: #ffcc00; /* Gold-like color for high visibility */
+    text-shadow: 0 0 5px #ffcc00;
+}
+
+/* Heading 1 (Arabic Name) Styling with Gradient and Glow */
+@keyframes glow{
+  0%,100%{text-shadow:0 0 25px #00aaff,0 0 45px #0088ff}
+  50%{text-shadow:0 0 15px #00b3ff,0 0 30px #00aaff}
+}
+h1{
+  font-family:'Amiri', 'Cairo', sans-serif;
+  font-size:3rem;
+  
+  /* Text Gradient effect */
+  background-image: linear-gradient(45deg, #00ffe0, #00aaff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+
+  animation:glow 3s ease-in-out infinite;
+  letter-spacing:3px;
+  margin-bottom:12px;
+  z-index: 10;
+}
+h2{
+  font-weight:600;
+  font-size:1.3rem;
+  color:#c9f9ff;
+  text-shadow:0 0 10px rgba(0,255,255,.3);
+  margin-bottom:30px;
+  z-index: 10;
+}
+
+/* Timer Box Styling (Glassmorphism Effect) */
+.timer{
+  background:rgba(255,255,255,.15);
+  border:1px solid rgba(255,255,255,.25);
+  border-radius:20px;
+  box-shadow:0 0 40px rgba(0,255,255,.25);
+  backdrop-filter:blur(12px);
+  padding:28px 50px;
+  transition:transform .4s,box-shadow .4s;
+  z-index: 10;
+}
+.timer:hover{
+  transform:scale(1.03);
+  box-shadow:0 0 60px rgba(0,255,255,.4);
+}
+.timer span{
+  display:inline-block;
+  margin:12px 20px;
+  font-size:1.1rem;
+  color:#d6faff;
+}
+
+/* Highlighted Digits Styling with Gradient */
+.highlight{
+  display:block;
+  font-size:2rem;
+  font-weight:700;
+  
+  /* Text Gradient effect */
+  background-image: linear-gradient(45deg, #00ffe0, #00aaff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+  
+  /* Shadow adjusted for gradient */
+  text-shadow:0 0 10px rgba(0,255,255,.5);
+}
+footer{
+  margin-top:40px;
+  font-size:.95rem;
+  color:#a3f8ff;
+  text-shadow:0 0 8px rgba(0,255,255,.3);
+  z-index: 10;
+}
+
+/* Floating Name Bubbles - Modified to allow clicking (pointer-events: auto) */
+.name-bubble{
+  position:absolute;
+  bottom:-50px;
+  font-family:'Cairo',sans-serif;
+  font-size:2rem;
+  cursor: pointer; /* Indicate it's clickable */
+  
+  /* Text Gradient effect */
+  background-image: linear-gradient(45deg, #00ffe0, #00aaff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+
+  opacity:0.8;
+  animation:floatUp linear infinite;
+  white-space:nowrap;
+  text-shadow:0 0 20px rgba(0,255,255,0.6);
+  pointer-events: auto; /* IMPORTANT: Enable click events */
+  transition: opacity 0.1s, transform 0.1s;
+  user-select: none;
+}
+/* Burst Animation */
+@keyframes burst {
+    0% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(2); opacity: 0; }
+}
+.bubble-burst {
+    animation-name: burst !important; /* Override floatUp */
+    animation-duration: 0.3s !important;
+    animation-timing-function: ease-out !important;
+    pointer-events: none;
+}
+@keyframes floatUp{
+  0%{transform:translateY(0) translateX(0) scale(1);opacity:0.9}
+  50%{transform:translateY(-60vh) translateX(15px) scale(1.1);opacity:0.7}
+  100%{transform:translateY(-120vh) translateX(-15px) scale(1.3);opacity:0}
+}
+</style>
+</head>
+<body>
+  <div class="starfield" id="starfield"></div>
+
+  <div id="scoreboard">Score: <span id="score-value">0</span></div>
+
+  <h1>عائشة سيف قادري</h1>
+  <h2>⏳ Since 3 October 2025 — 02:02 AM</h2>
+  <div class="timer" id="timer">Loading…</div>
+  <footer>Counting the moments since <strong>03 October 2025, 02:02 AM</strong></footer>
+
+<audio id="bubble-sound" src="data:audio/mp3;base64,SUQzBAAAAAABVVZFVFdTU0U0LjExNgAAABhMQU1FMy45OS41qT0gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/uQZkAAAGcAAAASWYNQQFNRTMuOTkuNVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVT//6uQQEAAASAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/7yZqgAAARkAAAAAAAAAAAAP/6uQQkAAASAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/vJmrAAAApAAAAAAAAAAAAAASQQmJbW5n//yFVgAUAAAPeAAAAv4qgRkNE/+5CmkQAAARsAAAATWQU9lTEuOTkuNURVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVD/7kKdDAAAARoAAAAUWdY/4JkREg4aAABlAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP+8maQAAAC8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/7yZpQAAADoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAs/7yZpQAAAE4AAAATWdY/4JkRFRUeQABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAsAP+5CnEQAAABeAAAAUWdFMy45OS41VgABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" preload="auto"></audio>
+
+<script>
+// --- GLOBAL GAME STATE ---
+let score = 0;
+const scoreboard = document.getElementById('score-value');
+const names = ["عائشة", "سيف"];
+const bubbleSound = document.getElementById('bubble-sound');
+
+
+// --- STARFIELD LOGIC (Kept from original) ---
+const starfield = document.getElementById('starfield');
+const numStars = 150; 
+
+for (let i = 0; i < numStars; i++) {
+  const star = document.createElement('div');
+  star.className = 'star';
+  const size = Math.random() * 2 + 1;
+  star.style.width = `${size}px`;
+  star.style.height = `${size}px`;
+  star.style.top = `${Math.random() * 100}%`;
+  star.style.left = `${Math.random() * 100}%`;
+  star.style.animationDelay = `${Math.random() * 15}s`;
+  star.style.animationDuration = `${Math.random() * 8 + 7}s`;
+  starfield.appendChild(star);
+}
+
+// --- GAME BUBBLE LOGIC ---
+
+// Handles the click/touch event on a bubble
+function burstBubble(event) {
+    const el = event.currentTarget;
+    
+    // 1. Update Score
+    score += 10;
+    scoreboard.textContent = score;
+
+    // 2. Play Sound
+    bubbleSound.currentTime = 0; // Rewind to start for quick repeated bursts
+    bubbleSound.play().catch(e => {
+        // Suppress autoplay policy errors, as it's an interactive sound
+        console.log("Audio playback prevented:", e);
+    });
+
+    // 3. Apply Burst Animation and Remove
+    el.classList.add('bubble-burst');
+    
+    // Remove the element after the burst animation finishes
+    setTimeout(() => el.remove(), 300); 
+}
+
+// Creates the floating name bubbles
+function createNameBubble() {
+    const el = document.createElement('div');
+    el.className = 'name-bubble';
+    el.textContent = names[Math.floor(Math.random() * names.length)];
+    el.style.left = Math.random() * 100 + '%';
+    el.style.fontSize = (Math.random() * 1.5 + 1.5) + 'rem';
+    el.style.animationDuration = (6 + Math.random() * 8) + 's';
+    
+    // Attach the burst logic to click/touch
+    el.addEventListener('click', burstBubble);
+    el.addEventListener('touchstart', (e) => {
+        e.preventDefault(); // Prevent touch events from triggering a separate click event
+        burstBubble(e);
+    });
+
+    document.body.appendChild(el);
+    
+    // Automatic removal if the bubble floats off-screen without being clicked
+    setTimeout(() => {
+        if(el.parentElement) {
+            el.remove();
+        }
+    }, (6 + 8) * 1000 + 1000); // Max animation duration + 1 second buffer
+}
+
+// Start creating bubbles
+setInterval(createNameBubble, 900);
+for (let i=0; i<10; i++) setTimeout(createNameBubble, i*500);
+
+
+// --- TIMER LOGIC (Accurate) ---
+const start = new Date('2025-10-03T02:02:00');
+
+function updateTimerAccurate() {
+  const now = new Date();
+  let diff = now - start;
+  
+  if (diff < 0) {
+    document.getElementById('timer').textContent = 
+      '⏳ Timer starts on 3 October 2025 at 02:02 AM';
+    return;
+  }
+  
+  const totalSeconds = Math.floor(diff / 1000);
+  const days = Math.floor(totalSeconds / (3600 * 24));
+  const secondsInDay = totalSeconds % (3600 * 24);
+  
+  // Approximate years and months for display
+  const years = Math.floor(days / 365.25); 
+  const months = Math.floor((days % 365.25) / 30.44); 
+  const remainingDays = Math.floor((days % 365.25) % 30.44);
+
+  const h = String(Math.floor(secondsInDay / 3600)).padStart(2, '0');
+  const min = String(Math.floor(secondsInDay / 60) % 60).padStart(2, '0');
+  const s = String(totalSeconds % 60).padStart(2, '0');
+
+  // Render the timer HTML
+  document.getElementById('timer').innerHTML =
+    `<span><span class="highlight">${years}</span>Years</span>
+     <span><span class="highlight">${months}</span>Months</span>
+     <span><span class="highlight">${remainingDays}</span>Days</span><br>
+     <span><span class="highlight">${h}</span>Hours</span>
+     <span><span class="highlight">${min}</span>Minutes</span>
+     <span><span class="highlight">${s}</span>Seconds</span>`;
+}
+
+// Update timer every second
+setInterval(updateTimerAccurate, 1000);
+// Run immediately on load
+updateTimerAccurate();
+</script>
+</body>
+</html>
